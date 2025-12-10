@@ -6,8 +6,9 @@ import (
 	"path/filepath"
 )
 
-// PrintTree imprime la estructura de archivos desde rootPath, excluyendo carpetas.
-func PrintTree(rootPath string, excludeDirs []string) error {
+// PrintTree imprime la estructura de archivos desde rootPath hasta una profundidad máxima (maxDepth).
+// maxDepth define cuántos niveles de subdirectorios se mostrarán.
+func PrintTree(rootPath string, excludeDirs []string, maxDepth int) error {
 	excluded := make(map[string]bool)
 	for _, dir := range excludeDirs {
 		excluded[dir] = true
@@ -19,12 +20,18 @@ func PrintTree(rootPath string, excludeDirs []string) error {
 	}
 
 	rootName := filepath.Base(absPath)
-	fmt.Println(rootName + "/") // ✅ Ahora imprimirá correctamente el nombre del directorio raíz
+	fmt.Println(rootName + "/")
 
-	return printRecursive(absPath, "", excluded)
+	// Iniciamos la recursión con currentDepth en 0
+	return printRecursive(absPath, "", excluded, 0, maxDepth)
 }
 
-func printRecursive(path string, prefix string, excluded map[string]bool) error {
+func printRecursive(path string, prefix string, excluded map[string]bool, currentDepth int, maxDepth int) error {
+	// Si hemos alcanzado la profundidad máxima, dejamos de explorar subcarpetas
+	if currentDepth >= maxDepth {
+		return nil
+	}
+
 	entries, err := os.ReadDir(path)
 	if err != nil {
 		return err
@@ -46,7 +53,8 @@ func printRecursive(path string, prefix string, excluded map[string]bool) error 
 				continue
 			}
 			newPath := filepath.Join(path, entry.Name())
-			err := printRecursive(newPath, prefix+subPrefix, excluded)
+			// Aumentamos currentDepth en 1 para la siguiente llamada recursiva
+			err := printRecursive(newPath, prefix+subPrefix, excluded, currentDepth+1, maxDepth)
 			if err != nil {
 				return err
 			}
